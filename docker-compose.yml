@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart : unless-stopped
+
+    ports:
+      - "6379:6379"
+    networks:
+      - my_network
+
+  server:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: server
+    restart : unless-stopped
+
+    depends_on:
+      -  redis
+
+    environment:
+      FROM: ${FROM}
+      SMTPHOST: ${SMTPHOST}
+      SMTPPORT: ${SMTPPORT}
+      SMTPUSER: ${SMTPUSER}
+      SMTPPASS: ${SMTPPASS}
+      REDIS_ADDR: ${REDIS_ADDR}
+    ports:
+      - "8080:8080"
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
