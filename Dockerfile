@@ -10,6 +10,6 @@ RUN CGO_ENABLE=0 GOOS=linux go build -ldflags="-w -s" -o job_queue_manager .
 FROM alpine:3.19
 WORKDIR /root
 RUN apk --no-cache add ca-certificates
-COPY --from=builder /app/job_queue_manager .
+COPY --from=builder app/openapi.yaml /app/job_queue_manager .
 EXPOSE 8080
 CMD ["./job_queue_manager"]

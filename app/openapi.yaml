@@ -1,0 +1,88 @@
+openapi: 3.0.3
+info:
+  title: Asynchronous Task Queue API
+  version: 1.0.0
+  description: An Job queue manager to manage background tasks
+servers:
+  - url: https://job-queue-manager.onrender.com
+    description: Live Render Production Server
+  - url: http://localhost:8080
+    description: Local Development Server
+paths:
+  /submit/:
+    post:
+      summary: Submit a new background task
+      description: Validates payload inputs and queues a background worker execution task.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - task_name
+                - payload
+              properties:
+                task_name:
+                  type: string
+                  example: "send_mail"
+                payload:
+                  type: object
+                  description: The execution payload matching the requirements of the specific task name.
+                  example:
+                    emails: ["user@example.com"]
+                    subject: "Hello World"
+                    content: "This is a programmatic transactional test email."
+      responses:
+        '202':
+          description: Task successfully queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    format: uuid
+                    example: "d3b07384-d113-49c3-a5f1-884846432f8b"
+                  status:
+                    type: string
+                    example: "job:pending"
+        '400':
+          description: Invalid syntax format or missing required structure configurations.
+        '405':
+          description: Method Not Allowed. Only POST methods are accepted.
+        '500':
+          description: Redis queue serialization error or database connection failure.
+
+  /status/:
+    get:
+      summary: Retrieve job processing status
+      description: Queries the Redis registry hash map storage to monitor lifecycle state updates.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: The structural UUID corresponding to the target background job tracking record.
+          schema:
+            type: string
+            format: uuid
+            example: "d3b07384-d113-49c3-a5f1-884846432f8b"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [pending, Running, completed, failed]
+                    example: "completed"
+        '400':
+          description: Bad request. Key not found in Redis registry.
+        '405':
+          description: Method Not Allowed. Only GET requests are accepted.
+        '500':
+          description: Internal network access state lookup errors.

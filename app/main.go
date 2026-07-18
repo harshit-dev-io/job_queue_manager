@@ -87,6 +87,14 @@ func main(){
 
 	http.HandleFunc("/submit/" , AddTask)
 	http.HandleFunc("/status/" , GetStatus)
+	http.HandleFunc("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
+    	http.ServeFile(w, r, "./openapi.yaml")
+	})
+
+	http.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+    	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+    	w.Write([]byte(renderdocs()))
+	})
 
 	if err := http.ListenAndServe(":8080" , nil) ; err != nil {
 		log.Print(err)
@@ -222,4 +230,31 @@ func GetStatus(w http.ResponseWriter , r *http.Request){
 	json.NewEncoder(w).Encode(map[string]string{
 		"status":string(status),
 	})
+}
+
+func renderdocs() string {
+	return `<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>API Documentation</title>
+		<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+	</head>
+	<body>
+		<div id="swagger-ui"></div>
+		<script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+		<script>
+			window.onload = () => {
+				window.ui = SwaggerUIBundle({
+					url: '/openapi.yaml', 
+					dom_id: '#swagger-ui',
+					deepLinking: true,
+					presets: [
+						SwaggerUIBundle.presets.apis,
+					],
+				});
+			};
+		</script>
+	</body>
+	</html>`
 }
