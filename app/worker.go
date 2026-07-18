@@ -47,18 +47,22 @@ func StartWorker(){
 		}
 
 		var msg AckMessage
-		err  = TaskExecutor(cntxt , job.Payload)
-		if err != nil{
-			msg = AckMessage{
-				ID: job.ID,
-				Status: JobStatus(StatusFailed),
-				CompletedAt: time.Now(),
-			}
-		}else{
-			msg = AckMessage{
-				ID: job.ID , 
-				Status: JobStatus(StatusCompleted),
-				CompletedAt: time.Now(),
+		for job.MaxRetries > job.Attempts{
+			job.Attempts++
+			err  = TaskExecutor(cntxt , job.Payload)
+			if err != nil{
+				msg = AckMessage{
+					ID: job.ID,
+					Status: JobStatus(StatusFailed),
+					CompletedAt: time.Now(),
+				}
+			}else{
+				msg = AckMessage{
+					ID: job.ID , 
+					Status: JobStatus(StatusCompleted),
+					CompletedAt: time.Now(),
+				}
+				break
 			}
 		}
 
